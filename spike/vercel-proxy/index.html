@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Proxy spike</title>
+  <style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem}pre{background:#f3f3f3;padding:1rem;overflow:auto}button{margin-right:.5rem}</style>
+</head>
+<body>
+  <h1>Proxy spike</h1>
+  <p>Throwaway page to test the Vercel rewrites to the Laravel API.</p>
+  <button id="ping">GET /api/ping</button>
+  <button id="csrf">GET /sanctum/csrf-cookie</button>
+  <pre id="out">Press a button.</pre>
+  <script>
+    const out = document.getElementById('out');
+    const show = (label, text) => { out.textContent = label + '\n' + text + '\n\ncookies visible to JS: ' + (document.cookie || '(none)'); };
+
+    document.getElementById('ping').onclick = async () => {
+      const t = performance.now();
+      try {
+        const r = await fetch('/api/ping', { headers: { Accept: 'application/json' }, credentials: 'include' });
+        show('ping: HTTP ' + r.status + ' in ' + Math.round(performance.now() - t) + ' ms', await r.text());
+      } catch (e) { show('ping failed', String(e)); }
+    };
+
+    document.getElementById('csrf').onclick = async () => {
+      try {
+        const r = await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
+        show('csrf-cookie: HTTP ' + r.status, 'Check DevTools > Application > Cookies for XSRF-TOKEN and the session cookie.');
+      } catch (e) { show('csrf-cookie failed', String(e)); }
+    };
+  </script>
+</body>
+</html>
