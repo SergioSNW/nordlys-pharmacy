@@ -5,32 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Proxy spike</title>
-  <style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem}pre{background:#f3f3f3;padding:1rem;overflow:auto}button{margin-right:.5rem}</style>
+  <style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem}pre{background:#f3f3f3;padding:1rem;overflow:auto;white-space:pre-wrap}button{margin-right:.5rem}</style>
 </head>
 <body>
   <h1>Proxy spike</h1>
   <p>Throwaway page to test the Vercel rewrites to the Laravel API.</p>
   <button id="ping">GET /api/ping</button>
   <button id="csrf">GET /sanctum/csrf-cookie</button>
-  <pre id="out">Press a button.</pre>
+  <pre id="out">Press a button once, then wait. A cold start can take a while.</pre>
   <script>
     const out = document.getElementById('out');
-    const show = (label, text) => { out.textContent = label + '\n' + text + '\n\ncookies visible to JS: ' + (document.cookie || '(none)'); };
+    const buttons = document.querySelectorAll('button');
+    const cookies = () => '\n\ncookies visible to JS: ' + (document.cookie || '(none)');
 
-    document.getElementById('ping').onclick = async () => {
-      const t = performance.now();
+    // Runs one request, shows a live timer while waiting, and blocks double presses.
+    async function run(label, url, options, describe) {
+      buttons.forEach(b => b.disabled = true);
+      const start = performance.now();
+      const timer = setInterval(() => {
+        out.textContent = label + ': waiting... ' + ((performance.now() - start) / 1000).toFixed(1) + ' s';
+      }, 100);
       try {
-        const r = await fetch('/api/ping', { headers: { Accept: 'application/json' }, credentials: 'include' });
-        show('ping: HTTP ' + r.status + ' in ' + Math.round(performance.now() - t) + ' ms', await r.text());
-      } catch (e) { show('ping failed', String(e)); }
-    };
+        const r = await fetch(url, options);
+        const ms = Math.round(performance.now() - start);
+        out.textContent = label + ': HTTP ' + r.status + ' in ' + ms + ' ms\n' + (await describe(r)) + cookies();
+      } catch (e) {
+        out.textContent = label + ' failed: ' + String(e) + cookies();
+      } finally {
+        clearInterval(timer);
+        buttons.forEach(b => b.disabled = false);
+      }
+    }
 
-    document.getElementById('csrf').onclick = async () => {
-      try {
-        const r = await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
-        show('csrf-cookie: HTTP ' + r.status, 'Check DevTools > Application > Cookies for XSRF-TOKEN and the session cookie.');
-      } catch (e) { show('csrf-cookie failed', String(e)); }
-    };
+    document.getElementById('ping').onclick = () =>
+      run('ping', '/api/ping', { headers: { Accept: 'application/json' }, credentials: 'include' }, r => r.text());
+
+    document.getElementById('csrf').onclick = () =>
+      run('csrf-cookie', '/sanctum/csrf-cookie', { credentials: 'include' },
+        async () => 'Check DevTools > Application > Cookies for XSRF-TOKEN and the session cookie.');
   </script>
 </body>
 </html>
