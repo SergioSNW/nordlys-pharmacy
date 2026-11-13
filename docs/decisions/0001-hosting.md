@@ -1,6 +1,6 @@
 # 0001. Hosting for the public demo
 
-- **Status:** Proposed (pending the hands-on spike below)
+- **Status:** Accepted (spike completed 2026-11-12)
 - **Date:** 2026-11-09
 - **Context owner:** Sergio Santamaria Nora
 
@@ -47,10 +47,29 @@ Figures below come from provider docs where I could open them (Vercel, Neon via 
 
 ## Spike checklist (about one hour)
 
-- [ ] Neon: create a project, note the connection string, connect from local Laravel and run a migration.
-- [ ] Render: deploy a minimal Laravel container from GitHub, confirm it builds and answers `/up`.
-- [ ] Render to Neon: confirm the deployed container can read and write the database.
-- [ ] Vercel: deploy a placeholder React app and add rewrites for `/api` and `/sanctum` to the Render URL.
-- [ ] Confirm a cookie set by `/sanctum/csrf-cookie` is stored by the browser on the Vercel domain.
-- [ ] Record the wake up time after 15 idle minutes.
-- [ ] Write the real, current limits here and change the status to Accepted or Rejected.
+- [x] Neon: create a project, note the connection string, connect from local Laravel and run a migration.
+- [x] Render: deploy a minimal Laravel container from GitHub, confirm it builds and answers `/up`.
+- [x] Render to Neon: confirm the deployed container can read and write the database.
+- [x] Vercel: deploy a placeholder React app and add rewrites for `/api` and `/sanctum` to the Render URL.
+- [x] Confirm a cookie set by `/sanctum/csrf-cookie` is stored by the browser on the Vercel domain.
+- [x] Record the wake up time after 15 idle minutes.
+- [x] Write the real, current limits here and change the status to Accepted or Rejected.
+
+## Spike results (2026-11-12)
+
+| Check | Result |
+|---|---|
+| Neon from local Laravel | Works. Needed the endpoint ID in the password locally only, because the Windows PHP has an old libpq without SNI support. |
+| Render container build | Works from `deploy/Dockerfile` with the repo root as build context. |
+| Render to Neon | Works with a plain `DB_URL`. Migrations found the existing tables. |
+| Queue worker | Needed `HOME=/tmp` for the `www-data` process, otherwise libpq failed on `/root/.postgresql`. Fixed in `deploy/supervisord.conf`. |
+| Vercel rewrites to Render | `/api/ping` answered through the Vercel domain. Warm response about 100 to 400 ms. |
+| Cookies through the proxy | `/sanctum/csrf-cookie` returned 204 and `XSRF-TOKEN` was stored on the Vercel domain. |
+| Cold start | One measurement after about 20 idle minutes: 24.5 s. Render's health checks do not keep the service awake. |
+
+Notes for later phases:
+
+- Add `$middleware->statefulApi();` in `bootstrap/app.php` so authenticated `/api` calls use the session.
+- The UI needs a "waking up" message for the first booking or admin request after idle.
+- Only one cold start was measured, so treat 24 s as a rough figure.
+- The throwaway `spike/vercel-proxy` folder and the `nordlys-pharmacy-spike` Vercel project can be deleted once the real frontend project exists.
