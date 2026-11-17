@@ -38,6 +38,7 @@ It is inspired by a real pharmacy brief I worked on separately. That project is 
 - [Architecture](#architecture)
 - [Running locally](#running-locally)
 - [Demo access](#demo-access)
+- [Hosting note](#hosting-note)
 - [Safeguards on the public demo](#safeguards-on-the-public-demo)
 - [Roadmap](#roadmap)
 - [Licence](#licence)
@@ -147,6 +148,10 @@ cd nordlys-pharmacy
 
 The public demo uses a demo admin account without enforced two factor, rate limited, with data reset every night. Two factor authentication is shown through the automated tests, this README and the demo recording.
 
+## Hosting note
+
+The demo runs on free hosting tiers. The public pages load instantly, but the first request that needs the API after a quiet period can take up to a minute while the server wakes up. The site calls the API in the background as soon as a page opens and shows a message while it waits. A short recording of the full flow is linked at the top for anyone who prefers not to wait.
+
 ## Safeguards on the public demo
 
 - Demo banner and `noindex` on every page
@@ -159,11 +164,11 @@ The public demo uses a demo admin account without enforced two factor, rate limi
 | Phase | Dates | Outcome |
 |---|---|---|
 | 0. Decisions and setup | 9 to 10 Nov | Brand, public repository, hosting spike |
-| 1. Foundations and first deploy | 11 to 17 Nov | Login with two factor and one booking saved, deployed |
-| 2. Design and public site | 18 Nov to 1 Dec | All public pages and the gallery live |
+| 1. Foundations and first deploy | 11 to 17 Nov | Login with two factor and one booking saved, deployed, API warm-up call |
+| 2. Design and public site | 18 Nov to 1 Dec | All public pages and the gallery live, with a "waking up" message for the API |
 | 3. Booking engine and emails | 2 to 15 Dec | Full booking flow, queued emails, outbox page |
 | 4. Admin panel | 16 Dec to 5 Jan | Staff can run a day of appointments |
-| 5. Polish and evidence | 6 to 12 Jan | Tests, README, case study, recording, final deploy |
+| 5. Polish and evidence | 6 to 12 Jan | Tests, README, case study, recording, final deploy, optional keep-alive |
 
 Stretch goals, only if time allows: live dashboard updates and extra service pages with sample text.
 
